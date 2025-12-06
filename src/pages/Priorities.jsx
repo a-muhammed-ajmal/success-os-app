@@ -15,6 +15,20 @@ export default function Priorities() {
     isFocus: false
   });
 
+  const [refreshCounter, setRefreshCounter] = useState(0);
+
+  const handleFocusChange = async (e) => {
+    const isChecked = e.target.checked;
+    if (isChecked) {
+      const focusTasksCount = await db.tasks.where({ isFocus: true }).filter(t => t.status !== 'done').count();
+      if (focusTasksCount >= 3) {
+        alert("You can only have 3 tasks in Today's Focus.");
+        return;
+      }
+    }
+    setFormData({ ...formData, isFocus: isChecked });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -31,7 +45,7 @@ export default function Priorities() {
         isFocus: false
       });
       setShowForm(false);
-      window.location.reload(); // Quick refresh
+      setRefreshCounter(prev => prev + 1);
     } catch (error) {
       console.error('Error adding task:', error);
     }
@@ -104,7 +118,7 @@ export default function Priorities() {
                 type="checkbox"
                 id="isFocus"
                 checked={formData.isFocus}
-                onChange={(e) => setFormData({ ...formData, isFocus: e.target.checked })}
+                onChange={handleFocusChange}
               />
               <label htmlFor="isFocus" className="text-sm">
                 Add to Today's Focus (max 3)
@@ -127,7 +141,7 @@ export default function Priorities() {
         </div>
       )}
 
-      <TaskList />
+      <TaskList refreshCounter={refreshCounter} />
     </div>
   );
 }

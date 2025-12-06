@@ -2,23 +2,35 @@ import { useEffect, useState } from 'react';
 import db from '../../lib/db';
 import TaskCard from './TaskCard';
 
-export default function TaskList() {
+export default function TaskList({ refreshCounter }) {
   const [tasks, setTasks] = useState([]);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     loadTasks();
-  }, [filter]);
+  }, [filter, refreshCounter]);
 
   const loadTasks = async () => {
     try {
-      let query = db.tasks;
-      if (filter === 'todo') {
-        query = query.where('status').equals('todo');
-      } else if (filter === 'done') {
-        query = query.where('status').equals('done');
+      let data;
+      if (filter === 'all') {
+        data = await db.tasks.toArray();
+      } else {
+        data = await db.tasks.where('status').equals(filter).toArray();
       }
-      const data = await query.sortBy('dueDate');
+
+      // Manual sort to prevent errors from invalid dueDates like ''
+      data.sort((a, b) => {
+        const timeA = new Date(a.dueDate).getTime();
+        const timeB = new Date(b.dueDate).getTime();
+
+        // Treat invalid dates as "greater than" valid dates
+        if (isNaN(timeA)) return 1;
+        if (isNaN(timeB)) return -1;
+
+        return timeA - timeB;
+      });
+
       setTasks(data);
     } catch (error) {
       console.error('Error loading tasks:', error);

@@ -17,7 +17,18 @@ export default function GetThingsDone() {
       const allTasks = await db.tasks
         .where('status')
         .equals('todo')
-        .sortBy('dueDate');
+        .toArray();
+
+      allTasks.sort((a, b) => {
+        const timeA = new Date(a.dueDate).getTime();
+        const timeB = new Date(b.dueDate).getTime();
+
+        if (isNaN(timeA)) return 1;
+        if (isNaN(timeB)) return -1;
+
+        return timeA - timeB;
+      });
+        
       setTasks(allTasks.slice(0, 10));
     } catch (error) {
       console.error('Error loading tasks:', error);

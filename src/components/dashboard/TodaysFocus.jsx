@@ -11,13 +11,11 @@ export default function TodaysFocus() {
 
   const loadFocusTasks = async () => {
     try {
-      const tasks = await db.tasks
-        .where('isFocus')
-        .equals(true)
-        .and(t => t.status !== 'done')
-        .limit(3)
-        .toArray();
-      setFocusTasks(tasks);
+      const tasks = await db.tasks.toArray();
+      const focusTasks = tasks
+        .filter(t => t.isFocus === true && t.status !== 'done')
+        .slice(0, 3);
+      setFocusTasks(focusTasks);
     } catch (error) {
       console.error('Error loading focus tasks:', error);
     }
